@@ -549,36 +549,89 @@ body{background:var(--bg0);color:var(--text1);font-family:-apple-system,BlinkMac
   <div class="modal">
     <div class="modal-drag"></div>
     <h2>Aggiungi attivita</h2>
-    <div class="form-group">
-      <label class="form-label">Tipo di attivita</label>
-      <div class="activity-chips" id="activity-chips">
-        <button class="chip active" onclick="selectActivity(this,'Ciclismo',580)">Ciclismo</button>
-        <button class="chip" onclick="selectActivity(this,'Corsa',700)">Corsa</button>
-        <button class="chip" onclick="selectActivity(this,'Nuoto',500)">Nuoto</button>
-        <button class="chip" onclick="selectActivity(this,'Camminata',280)">Camminata</button>
-        <button class="chip" onclick="selectActivity(this,'Palestra',380)">Palestra</button>
-        <button class="chip" onclick="selectActivity(this,'Yoga',200)">Yoga</button>
-        <button class="chip" onclick="selectActivity(this,'HIIT',700)">HIIT</button>
-        <button class="chip" onclick="selectActivity(this,'Tennis',440)">Tennis</button>
-        <button class="chip" onclick="selectActivity(this,'Altro',300)">Altro</button>
-      </div>
+    <div style="display:flex;gap:0;background:var(--bg2);border-radius:var(--radius-sm);padding:3px;margin-bottom:16px;border:1px solid var(--border)">
+      <button id="tab-manual" class="period-btn active" style="flex:1" onclick="switchActTab('manual')">Manuale</button>
+      <button id="tab-file" class="period-btn" style="flex:1" onclick="switchActTab('file')">GPX / FIT</button>
     </div>
-    <div class="form-row">
+    <div id="act-tab-manual">
       <div class="form-group">
-        <label class="form-label">Durata (min)</label>
-        <input class="form-input" id="act-duration" type="number" placeholder="60" value="60" inputmode="numeric" oninput="updateActCalc()">
+        <label class="form-label">Tipo di attivita</label>
+        <div class="activity-chips" id="activity-chips">
+          <button class="chip active" onclick="selectActivity(this,'Ciclismo',580)">Ciclismo</button>
+          <button class="chip" onclick="selectActivity(this,'Corsa',700)">Corsa</button>
+          <button class="chip" onclick="selectActivity(this,'Nuoto',500)">Nuoto</button>
+          <button class="chip" onclick="selectActivity(this,'Camminata',280)">Camminata</button>
+          <button class="chip" onclick="selectActivity(this,'Palestra',380)">Palestra</button>
+          <button class="chip" onclick="selectActivity(this,'Yoga',200)">Yoga</button>
+          <button class="chip" onclick="selectActivity(this,'HIIT',700)">HIIT</button>
+          <button class="chip" onclick="selectActivity(this,'Tennis',440)">Tennis</button>
+          <button class="chip" onclick="selectActivity(this,'Altro',300)">Altro</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Kcal/ora (stima)</label>
-        <input class="form-input" id="act-kcalh" type="number" value="580" inputmode="numeric" oninput="updateActCalc()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Durata (min)</label>
+          <input class="form-input" id="act-duration" type="number" placeholder="60" value="60" inputmode="numeric" oninput="updateActCalc()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kcal/ora (stima)</label>
+          <input class="form-input" id="act-kcalh" type="number" value="580" inputmode="numeric" oninput="updateActCalc()">
+        </div>
       </div>
+      <div class="card-sm" style="margin-bottom:16px;text-align:center">
+        <div style="font-size:12px;color:var(--text3)">Calorie bruciate stimate</div>
+        <div style="font-size:34px;font-weight:800;color:var(--green)" id="act-calc-kcal">580</div>
+      </div>
+      <button class="btn btn-green" onclick="addActivity()" style="margin-bottom:8px">Salva attivita</button>
+      <button class="btn btn-secondary" onclick="closeActivityModal()">Annulla</button>
     </div>
-    <div class="card-sm" style="margin-bottom:16px;text-align:center">
-      <div style="font-size:12px;color:var(--text3)">Calorie bruciate stimate</div>
-      <div style="font-size:34px;font-weight:800;color:var(--green)" id="act-calc-kcal">580</div>
+    <div id="act-tab-file" style="display:none">
+      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px">
+        Importa un file <strong style="color:var(--text1)">GPX</strong> (Garmin, Wahoo, Strava) o <strong style="color:var(--text1)">FIT</strong> (Garmin Connect). Durata, distanza, dislivello e calorie vengono lette automaticamente.
+      </div>
+      <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed var(--border);border-radius:var(--radius-sm);padding:28px 16px;cursor:pointer;background:var(--bg2);margin-bottom:14px" id="file-drop-zone">
+        <i class="ti ti-file-upload" style="font-size:40px;color:var(--accent)"></i>
+        <span style="font-size:14px;font-weight:600;color:var(--text2)">Tocca per scegliere il file</span>
+        <span style="font-size:11px;color:var(--text3)">.gpx oppure .fit</span>
+        <input type="file" accept=".gpx,.fit" onchange="parseActivityFile(event)" style="display:none" id="act-file-input">
+      </label>
+      <div id="act-file-result" style="display:none">
+        <div class="card-sm" style="margin-bottom:14px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:12px" id="af-title">Attivita rilevata</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center">
+            <div>
+              <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Durata</div>
+              <div style="font-size:22px;font-weight:800;color:var(--accent)" id="af-duration">--</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Distanza</div>
+              <div style="font-size:22px;font-weight:800;color:var(--accent2)" id="af-distance">--</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Vel. media</div>
+              <div style="font-size:22px;font-weight:800;color:var(--amber)" id="af-speed">--</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Dislivello +</div>
+              <div style="font-size:22px;font-weight:800;color:var(--green)" id="af-elevation">--</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bg3);text-align:center">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Calorie bruciate</div>
+            <div style="font-size:36px;font-weight:800;color:var(--green)" id="af-kcal">--</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px" id="af-kcal-source"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Correggi calorie se necessario</label>
+          <input class="form-input" id="af-kcal-override" type="number" inputmode="numeric" placeholder="Lascia vuoto per usare valore rilevato">
+        </div>
+        <button class="btn btn-green" onclick="saveFileActivity()" style="margin-bottom:8px">Salva attivita</button>
+        <button class="btn btn-outline" onclick="resetFileTab()">Carica altro file</button>
+      </div>
+      <div id="act-file-error" style="display:none;color:var(--red);font-size:13px;text-align:center;padding:12px;background:var(--bg2);border-radius:var(--radius-sm);margin-bottom:12px"></div>
+      <button class="btn btn-secondary" style="margin-top:10px" onclick="closeActivityModal()">Annulla</button>
     </div>
-    <button class="btn btn-green" onclick="addActivity()" style="margin-bottom:8px">Salva attivita</button>
-    <button class="btn btn-secondary" onclick="closeActivityModal()">Annulla</button>
   </div>
 </div>
 
@@ -1248,6 +1301,283 @@ function renderStats(){
     '<div class="stat-row" style="border-bottom:none"><span style="color:var(--text2);font-size:14px">Media grassi</span><span style="font-weight:800;color:var(--red)">'+avgFat+'g/gg</span></div>';
 }
 
+
+
+// ---- GPX / FIT PARSER ----
+function switchActTab(tab){
+  document.getElementById('act-tab-manual').style.display = tab==='manual' ? 'block' : 'none';
+  document.getElementById('act-tab-file').style.display   = tab==='file'   ? 'block' : 'none';
+  document.getElementById('tab-manual').classList.toggle('active', tab==='manual');
+  document.getElementById('tab-file').classList.toggle('active', tab==='file');
+  if(tab==='file') resetFileTab();
+}
+
+function resetFileTab(){
+  document.getElementById('act-file-result').style.display = 'none';
+  document.getElementById('act-file-error').style.display  = 'none';
+  document.getElementById('file-drop-zone').style.display  = 'flex';
+  document.getElementById('act-file-input').value = '';
+  document.getElementById('af-kcal-override').value = '';
+}
+
+// Stored parsed activity
+var parsedActivity = null;
+
+function parseActivityFile(event){
+  var file = event.target.files[0];
+  if(!file){ return; }
+  var name = file.name.toLowerCase();
+  var reader = new FileReader();
+
+  if(name.endsWith('.gpx')){
+    reader.onload = function(e){ parseGPX(e.target.result, file.name); };
+    reader.readAsText(file);
+  } else if(name.endsWith('.fit')){
+    reader.onload = function(e){ parseFIT(e.target.result, file.name); };
+    reader.readAsArrayBuffer(file);
+  } else {
+    showFileError('Formato non supportato. Usa un file .gpx o .fit');
+  }
+}
+
+function parseGPX(text, filename){
+  try {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(text, 'text/xml');
+    var trkpts = doc.querySelectorAll('trkpt');
+    if(trkpts.length === 0){
+      showFileError('Nessun punto GPS trovato nel file GPX.');
+      return;
+    }
+
+    // Time
+    var times = [];
+    trkpts.forEach(function(pt){
+      var t = pt.querySelector('time');
+      if(t) times.push(new Date(t.textContent));
+    });
+    var durationMin = 0;
+    if(times.length >= 2){
+      durationMin = Math.round((times[times.length-1] - times[0]) / 60000);
+    }
+
+    // Distance (Haversine)
+    var totalDist = 0;
+    for(var i=1; i<trkpts.length; i++){
+      var lat1 = parseFloat(trkpts[i-1].getAttribute('lat'));
+      var lon1 = parseFloat(trkpts[i-1].getAttribute('lon'));
+      var lat2 = parseFloat(trkpts[i].getAttribute('lat'));
+      var lon2 = parseFloat(trkpts[i].getAttribute('lon'));
+      totalDist += haversine(lat1, lon1, lat2, lon2);
+    }
+    var distKm = Math.round(totalDist/10)/100;
+
+    // Elevation gain
+    var elevGain = 0;
+    var prevEle = null;
+    trkpts.forEach(function(pt){
+      var el = pt.querySelector('ele');
+      if(el){
+        var e = parseFloat(el.textContent);
+        if(prevEle !== null && e > prevEle) elevGain += (e - prevEle);
+        prevEle = e;
+      }
+    });
+
+    // Speed
+    var speedKmh = durationMin > 0 ? Math.round(distKm / durationMin * 60 * 10)/10 : 0;
+
+    // Calories from extensions or estimate
+    var kcalFromFile = 0;
+    var kcalSource = 'stima da durata e tipo attivita';
+    var calEl = doc.querySelector('Calories, calories, TotalCalories');
+    if(calEl){ kcalFromFile = parseInt(calEl.textContent)||0; if(kcalFromFile>0) kcalSource='dal file GPX'; }
+
+    // Detect activity type from filename/metadata
+    var actType = detectActivityType(filename + ' ' + (doc.querySelector('type')||{textContent:''}).textContent);
+    var kcalEstimate = kcalFromFile > 0 ? kcalFromFile : estimateKcal(actType, durationMin, distKm, elevGain);
+
+    parsedActivity = {
+      name: actType,
+      duration: durationMin,
+      distKm: distKm,
+      speed: speedKmh,
+      elevation: Math.round(elevGain),
+      burned: kcalEstimate,
+      source: 'GPX'
+    };
+    showFileResult(kcalSource);
+  } catch(err){
+    showFileError('Errore nella lettura del GPX: ' + err.message);
+  }
+}
+
+function parseFIT(buffer, filename){
+  // FIT binary parser — reads header and data messages
+  try {
+    var bytes = new Uint8Array(buffer);
+    var result = parseFITBinary(bytes);
+    if(!result){
+      // Fallback: estimate from file size / name
+      showFileError('File FIT non leggibile direttamente. Prova ad esportare in formato GPX da Garmin Connect o Strava.');
+      return;
+    }
+    parsedActivity = result;
+    showFileResult(result.kcalSource || 'dal file FIT');
+  } catch(err){
+    showFileError('Errore nella lettura del FIT. Esporta il file in formato GPX e riprova.');
+  }
+}
+
+function parseFITBinary(bytes){
+  // FIT file signature check
+  if(bytes[8] !== 0x2E || bytes[9] !== 0x46 || bytes[10] !== 0x49 || bytes[11] !== 0x54){
+    return null; // not a valid FIT
+  }
+  var dataSize = bytes[4] | (bytes[5]<<8) | (bytes[6]<<16) | (bytes[7]<<24);
+
+  var totalKcal = 0, totalDist = 0, totalTime = 0, sport = 'Altro';
+  var localMsgDefs = {};
+  var pos = 14; // skip header
+  var end = 14 + dataSize;
+
+  while(pos < end - 1){
+    var header = bytes[pos];
+    if((header & 0x80) === 0){ // normal header
+      var isDefMsg = (header & 0x40) !== 0;
+      var localNum = header & 0x0F;
+      pos++;
+      if(isDefMsg){
+        // definition message
+        pos++; // reserved
+        var arch = bytes[pos++];
+        var globalMsgNum = arch === 0 ? (bytes[pos] | bytes[pos+1]<<8) : (bytes[pos]<<8 | bytes[pos+1]);
+        pos += 2;
+        var numFields = bytes[pos++];
+        var fields = [];
+        for(var i=0; i<numFields; i++){
+          fields.push({num:bytes[pos], size:bytes[pos+1], type:bytes[pos+2]});
+          pos += 3;
+        }
+        localMsgDefs[localNum] = {globalNum: globalMsgNum, fields: fields, arch: arch};
+      } else {
+        // data message
+        var def = localMsgDefs[localNum];
+        if(!def){ break; }
+        var msgStart = pos;
+        var msgSize = def.fields.reduce(function(a,f){ return a+f.size },0);
+
+        if(def.globalNum === 18){ // session
+          var offset = 0;
+          def.fields.forEach(function(f){
+            var val = 0;
+            for(var b=0; b<f.size; b++){
+              val |= bytes[msgStart+offset+b] << (def.arch===0 ? b*8 : (f.size-1-b)*8);
+            }
+            if(f.num === 11 && f.size===4){ totalTime = Math.round(val/1000/60); } // total_timer_time
+            if(f.num === 9  && f.size===4){ totalDist = Math.round(val/100)/1000; } // total_distance m->km
+            if(f.num === 11 && f.size===2){ totalKcal = val; } // calories (alt field num)
+            if(f.num === 7  && f.size===2 && val < 10000){ totalKcal = val; } // total_calories
+            offset += f.size;
+          });
+        }
+        if(def.globalNum === 12){ // sport
+          var sval = bytes[msgStart];
+          var sports = {0:'Corsa',1:'Ciclismo',2:'Ellittica',3:'Arrampicata',4:'Nuoto',5:'Basket',6:'Calcio',255:'Altro'};
+          sport = sports[sval] || 'Altro';
+        }
+        pos += msgSize;
+      }
+    } else {
+      pos++; // compressed timestamp, skip
+    }
+  }
+
+  var kcalEst = totalKcal > 0 ? totalKcal : estimateKcal(sport, totalTime, totalDist, 0);
+  return {
+    name: sport,
+    duration: totalTime || 60,
+    distKm: totalDist,
+    speed: totalTime > 0 ? Math.round(totalDist/totalTime*60*10)/10 : 0,
+    elevation: 0,
+    burned: kcalEst,
+    source: 'FIT',
+    kcalSource: totalKcal > 0 ? 'dal file FIT' : 'stima da durata'
+  };
+}
+
+function haversine(lat1, lon1, lat2, lon2){
+  var R = 6371000;
+  var dLat = (lat2-lat1)*Math.PI/180;
+  var dLon = (lon2-lon1)*Math.PI/180;
+  var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+          Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+          Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function detectActivityType(hint){
+  hint = hint.toLowerCase();
+  if(hint.indexOf('cycl')>=0 || hint.indexOf('cicl')>=0 || hint.indexOf('bik')>=0 || hint.indexOf('ride')>=0) return 'Ciclismo';
+  if(hint.indexOf('run')>=0 || hint.indexOf('corsa')>=0) return 'Corsa';
+  if(hint.indexOf('swim')>=0 || hint.indexOf('nuot')>=0) return 'Nuoto';
+  if(hint.indexOf('walk')>=0 || hint.indexOf('cammin')>=0) return 'Camminata';
+  if(hint.indexOf('hik')>=0 || hint.indexOf('escurs')>=0) return 'Escursionismo';
+  return 'Attivita';
+}
+
+function estimateKcal(actType, durationMin, distKm, elevGain){
+  // Base kcal/min by activity + elevation bonus
+  var rates = {
+    'Ciclismo': 9.5, 'Corsa': 11.5, 'Nuoto': 8.5, 'Camminata': 4.5,
+    'Escursionismo': 6.5, 'HIIT': 12, 'Palestra': 6, 'Attivita': 7
+  };
+  var rate = rates[actType] || 7;
+  var base = Math.round(rate * durationMin);
+  var elevBonus = Math.round(elevGain * 0.1); // ~10 kcal per 100m dislivello
+  return base + elevBonus;
+}
+
+function showFileResult(kcalSource){
+  if(!parsedActivity) return;
+  document.getElementById('file-drop-zone').style.display = 'none';
+  document.getElementById('act-file-error').style.display = 'none';
+  document.getElementById('act-file-result').style.display = 'block';
+  document.getElementById('af-title').textContent = parsedActivity.name + ' — ' + parsedActivity.source;
+  var h = Math.floor(parsedActivity.duration/60);
+  var m = parsedActivity.duration % 60;
+  document.getElementById('af-duration').textContent = h>0 ? h+'h '+m+"'" : m+"'";
+  document.getElementById('af-distance').textContent = parsedActivity.distKm > 0 ? parsedActivity.distKm+' km' : '--';
+  document.getElementById('af-speed').textContent = parsedActivity.speed > 0 ? parsedActivity.speed+' km/h' : '--';
+  document.getElementById('af-elevation').textContent = parsedActivity.elevation > 0 ? '+'+parsedActivity.elevation+'m' : '--';
+  document.getElementById('af-kcal').textContent = parsedActivity.burned;
+  document.getElementById('af-kcal-source').textContent = kcalSource;
+}
+
+function showFileError(msg){
+  document.getElementById('file-drop-zone').style.display = 'none';
+  document.getElementById('act-file-result').style.display = 'none';
+  var errEl = document.getElementById('act-file-error');
+  errEl.style.display = 'block';
+  errEl.textContent = msg;
+}
+
+function saveFileActivity(){
+  if(!parsedActivity) return;
+  var overrideKcal = parseInt(document.getElementById('af-kcal-override').value);
+  var burned = overrideKcal > 0 ? overrideKcal : parsedActivity.burned;
+  var r = getTodayLog();
+  r.data[r.key].activities.push({
+    name: parsedActivity.name + (parsedActivity.distKm>0 ? ' ('+parsedActivity.distKm+'km)' : ''),
+    duration: parsedActivity.duration,
+    burned: burned,
+    source: parsedActivity.source
+  });
+  saveData(r.data);
+  closeActivityModal();
+  toast(parsedActivity.name+': -'+burned+' kcal importate da '+parsedActivity.source);
+  renderHome();
+}
 
 // ---- BACKUP / RESTORE ----
 function exportData(){
