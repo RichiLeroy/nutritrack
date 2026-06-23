@@ -441,6 +441,31 @@ body{background:var(--bg0);color:var(--text1);font-family:-apple-system,BlinkMac
     <button class="btn btn-primary" onclick="saveProfile()">Salva profilo</button>
   </div>
 
+  <div class="section-title">Backup dati</div>
+  <div class="card">
+    <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px">
+      Esporta i tuoi dati in un file JSON da conservare come backup. Importali in qualsiasi momento per ripristinare tutto (pasti, attivita, peso, profilo).
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary" onclick="exportData()">
+        <i class="ti ti-download" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Esporta backup
+      </button>
+      <label class="btn btn-outline" style="display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;padding:15px;border-radius:var(--radius-sm);border:1px solid var(--border);color:var(--text2);font-size:16px;font-weight:700">
+        <i class="ti ti-upload" style="font-size:16px;vertical-align:-2px"></i>Importa backup
+        <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+      </label>
+    </div>
+    <div id="backup-status" style="margin-top:12px;font-size:13px;color:var(--green);text-align:center;min-height:18px"></div>
+  </div>
+
+  <div class="section-title">Azzera dati</div>
+  <div class="card">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Cancella tutti i dati del diario (pasti, attivita, peso). Il profilo viene mantenuto.</div>
+    <button class="btn btn-outline" style="color:var(--red);border-color:var(--red);opacity:.8" onclick="resetData()">
+      <i class="ti ti-trash" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Azzera diario
+    </button>
+  </div>
+
   <div class="section-title">Formula Mifflin-St Jeor</div>
   <div class="card" style="font-size:13px;color:var(--text2);line-height:1.7">
     La formula piu accurata per il calcolo del metabolismo basale negli adulti.<br><br>
@@ -1221,6 +1246,75 @@ function renderStats(){
     '<div class="stat-row"><span style="color:var(--text2);font-size:14px">Media proteine</span><span style="font-weight:800;color:#a78bfa">'+avgProt+'g/gg</span></div>' +
     '<div class="stat-row"><span style="color:var(--text2);font-size:14px">Media carboidrati</span><span style="font-weight:800;color:var(--amber)">'+avgCarb+'g/gg</span></div>' +
     '<div class="stat-row" style="border-bottom:none"><span style="color:var(--text2);font-size:14px">Media grassi</span><span style="font-weight:800;color:var(--red)">'+avgFat+'g/gg</span></div>';
+}
+
+
+// ---- BACKUP / RESTORE ----
+function exportData(){
+  var backup = {
+    version: 1,
+    exportDate: new Date().toISOString(),
+    profile: getProfile(),
+    data: getData(),
+    weightLog: getWeightLog()
+  };
+  var json = JSON.stringify(backup, null, 2);
+  var blob = new Blob([json], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  a.href = url;
+  a.download = 'nutritrack_backup_'+d.getFullYear()+(d.getMonth()+1)+d.getDate()+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  var s = document.getElementById('backup-status');
+  if(s){ s.textContent = 'Backup esportato!'; setTimeout(function(){ s.textContent='' }, 3000); }
+  toast('Backup salvato!');
+}
+
+function importData(event){
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      var backup = JSON.parse(e.target.result);
+      if(!backup.version || !backup.data){
+        toast('File non valido');
+        return;
+      }
+      var dateStr = backup.exportDate ? new Date(backup.exportDate).toLocaleDateString('it-IT') : 'data sconosciuta';
+      if(!confirm('Importare il backup del '+dateStr+'? I dati attuali verranno sostituiti.')){
+        return;
+      }
+      saveData(backup.data);
+      if(backup.weightLog) saveWeightLog(backup.weightLog);
+      if(backup.profile) localStorage.setItem('nt_profile', JSON.stringify(backup.profile));
+      var s = document.getElementById('backup-status');
+      if(s){ s.textContent = 'Backup importato! Dati ripristinati.'; setTimeout(function(){ s.textContent='' }, 3000); }
+      toast('Backup importato con successo!');
+      loadProfile();
+      renderHome();
+    } catch(err) {
+      toast('Errore: file non valido');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetData(){
+  if(!confirm('Sei sicuro? Tutti i dati del diario (pasti, attivita, peso) verranno eliminati. Il profilo rimane.')){
+    return;
+  }
+  localStorage.removeItem('nt_data');
+  localStorage.removeItem('nt_weight');
+  toast('Diario azzerato');
+  var s = document.getElementById('backup-status');
+  if(s){ s.textContent = 'Diario azzerato.'; s.style.color='var(--red)'; setTimeout(function(){ s.textContent=''; s.style.color='var(--green)' }, 3000); }
+  renderHome();
 }
 
 // ---- INIT ----
